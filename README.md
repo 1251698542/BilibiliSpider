@@ -962,6 +962,7 @@ class Solution:
                 else:
                     return mid
             return low
+
 ```
 
 递归的二分法:
@@ -987,6 +988,7 @@ class Solution(object):
             return mid + self.searchInsert(nums[mid:],target)
         else:
             return self.searchInsert(nums[:mid],target)
+
 ```
 
 
@@ -1003,6 +1005,7 @@ class Solution(object):
 3.     21
 4.     1211
 5.     111221
+
 ```
 
 `1` 被读作  `"one 1"`  (`"一个一"`) , 即 `11`。

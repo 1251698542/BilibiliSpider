@@ -1149,78 +1149,201 @@ class Solution:
         return 0
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+如果不使用内置函数,代码如下:
 
 ```python
-# 加一
-def puls_one(digits):
-    digits[-1] += 1
-    idx = len(digits) - 1
-
-    # 注意这里没有等于0
-    while idx > 0:
-        if digits[idx] == 10:
-            digits[idx] = 0
-            digits[idx-1] += 1
-        idx -= 1
-
-    if digits[0] == 10:
-        digits[0] = 0
-        digits.insert(0,1)
-
-    return digits
-
-
-print(puls_one([0]))
-print(puls_one([1,2,3,4,5,6]))
-
-print(puls_one([8,9,9,9,9,9]))
-print(puls_one([9,9,9,9,9,9]))
+class Solution:
+    def lengthOfLastWord(self, s):
+        cnt = 0
+        tail = len(s) - 1
+        # 去掉末尾空格
+        while tail >= 0 and s[tail] == ' ':
+            tail -= 1
+        # 再计数,使用tail=0保证不会越界
+        while tail >= 0 and s[tail] != ' ':
+            cnt += 1
+            tail -= 1
+        return cnt
 ```
 
+经验:
+==越界的判断总是由index>=0来完成.==
 
 
 
+------
+
+# [66. 加一](https://leetcode-cn.com/problems/plus-one/)
+
+给定一个由**整数**组成的**非空**数组所表示的非负整数，在该数的基础上加一。
+
+最高位数字存放在数组的首位， 数组中每个元素只存储一个数字。
+
+你可以假设除了整数 0 之外，这个整数不会以零开头。
+
+**示例 1:**
+
+```
+输入: [1,2,3]
+输出: [1,2,4]
+解释: 输入数组表示数字 123。
+```
+
+**示例 2:**
+
+```
+输入: [4,3,2,1]
+输出: [4,3,2,2]
+解释: 输入数组表示数字 4321。
+```
+
+我的代码如下:
+
+```python
+class Solution:
+    def plusOne(self, digits: List[int]) -> List[int]:
+        # 先加上一
+        digits[-1] += 1
+        idx = len(digits) - 1
+
+        # 注意这里idx没有等于0
+        while idx > 0:
+            if digits[idx] == 10:
+                digits[idx] = 0
+                digits[idx-1] += 1
+            # 尽早结束
+            else:
+                return digits
+            idx -= 1
+            
+        # 判断是否要进位
+        if digits[0] == 10:
+            digits[0] = 0
+            digits.insert(0,1)
+        return digits   
+```
+
+上面我的代码其实是歪门邪道,真正的做法是设置一个**进位标识**(表示是否进位):
+
+```python
+class Solution:
+    def plusOne(self, digits: List[int]) -> List[int]:
+        # 进位标志，可以想象成‘一开始，个位的下一位进了一个1进来’
+        up = 1 
+        i = 0 
+        
+        while i < len(digits):
+            #当前值加进位 mod 10，就像小学生做加法一样
+            digits[-1-i] = (digits[-1-i] + up ) % 10
+            # 如果当前位变成0,说明发生了进位
+            if digits[-1-i] == 0:   
+                up = 1
+                i += 1
+            else:
+                break
+        #如果到了最高位还有进位，那就在头部插入1
+        if(i == len(digits) and up == 1):    
+            digits.insert(0,1)
+        return digits
+```
+
+经验:
+
+1. 对于进位操作,一般都是:
+
+   - ==使用进位标识==
+   - ==while跟踪进位标识==
+   - ==当前位的数值为(以前值+进位标识)%进制==
+
+2. 倒序遍历数组有四种方法:
+
+   - ```python 
+     for each in alist[::-1]:
+         each = ...
+     ```
+
+   - ```python
+     for idx in range(len(alist)-1,-1,-1):
+         alist[idx] = ...
+     ```
+
+   - ```python
+     idx = len(alist) - 1
+     while idx >= 0:
+         alist[idx] = ...
+         idx -= 1
+     ```
+
+   - ```python
+     idx = 0
+     while idx < len(alist):
+         alist[-1-idx] = ...
+         idx += 1
+     ```
 
 
 
+------
 
+# [67. 二进制求和](https://leetcode-cn.com/problems/add-binary/)
+
+给定两个二进制字符串，返回他们的和（用二进制表示）。
+
+输入为**非空**字符串且只包含数字 `1` 和 `0`。
+
+**示例 1:**
+
+```
+输入: a = "11", b = "1"
+输出: "100"
+```
+
+**示例 2:**
+
+```
+输入: a = "1010", b = "1011"
+输出: "10101"
+```
+
+如果使用内置函数int：
+
+```python
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        return bin(int(a,2) + int(b,2))[2:]
+```
+
+要使用上面说的进位标志,代码如下:
+
+```python
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        # 首先补零:当a为1,b为111时,将a补为001
+        if len(a) > len(b):
+            b = '0'*int(len(a)-len(b)) + b
+        else:
+            a = '0'*int(len(b)-len(a)) + a
+
+        # 进位标志
+        up = 0
+        res = ''
+        idx = len(a) - 1
+
+        while idx >= 0:
+            quo,remain = divmod(int(a[idx])+int(b[idx])+up,2)
+            res = str(remain) + res
+            # 当商大于0,表明发生了进位
+            if quo > 0:
+                up = 1
+            else:
+                up = 0
+
+            idx -= 1
+        # 当最后up等于1,表明位数发生变化,需要前面加入1
+        if up == 1:
+            res = '1' + res
+        return res
+```
 
 
 

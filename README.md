@@ -456,17 +456,14 @@ class Solution:
 输出：1->1->2->3->4->4
 ```
 
-代码:
+链表定义如下:
 
 ```python
 # Definition for singly-linked list.
-# class ListNode:
-#     def __init__(self, x):
-#         self.val = x
-#         self.next = None
-
-class Solution:
-    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
 ```
 
 我的代码如下:
@@ -1023,6 +1020,11 @@ class Solution:
         return result
 ```
 
+注意上面的5,6,7行代码,这里是不断的执行这个函数.将函数得到的结果当成下一次函数的参数.但是这里并**不是递归**.
+最明显的区别就是:递归是会暂停函数执行的.而且递归是==在自己的函数体里调用自己==,而这里是在别人的函数体里调用自己.
+
+但是,还是要有这种==在自己的函数体里重复调用别人==的思想.
+
 我还写了个get_before方法:
 
 ```python
@@ -1344,6 +1346,822 @@ class Solution:
             res = '1' + res
         return res
 ```
+
+经验:
+使用while进位标志的方法:
+
+- ==quo,remain = divmod((string1[idx] + string2[idx] + up) ,进制)==,如果quo==1,就说明发生了进位.
+- 当前值==s=(string1[idx] + string2[idx] + up) % 进制==,如果string[idx]+strings[idx]+up>进制,就说明发生了进位
+
+
+
+------
+
+# [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
+
+实现 `int sqrt(int x)` 函数。
+
+计算并返回 *x* 的平方根，其中 *x* 是非负整数。
+
+由于返回类型是整数，结果只保留整数的部分，小数部分将被舍去。
+
+**示例 1:**
+
+```
+输入: 4
+输出: 2
+```
+
+**示例 2:**
+
+```
+输入: 8
+输出: 2
+说明: 8 的平方根是 2.82842...由于返回类型是整数，小数部分将被舍去。
+```
+
+当然可以使用遍历,但是复杂度高:
+
+```python
+class Solution:
+    def mySqrt(self, x: int) -> int:
+        for each in range(x+1):
+            if each**2 <= x < (each+1)**2:
+                return each
+```
+
+我的代码:使用二分法
+
+```python
+class Solution:
+    def mySqrt(self, x: int) -> int:
+        low = 0
+        high = x
+
+        while low <= high:
+            mid = (low + high) // 2
+            # 注意这里
+            if mid**2 <= x <= (mid+1)**2:
+                if not (mid+1)**2 == x:
+                    return mid
+                else:
+                    return mid + 1
+            elif mid**2 < x:
+                low = mid + 1
+            elif mid**2 > x:
+                high = mid - 1
+        return mid
+```
+
+经验:
+在这里,二分法会分成三段.==除了节点外mid就会在这三段中==,如下:
+
+1. BC段:对应第9行代码的if
+2. AB段:对应第14行代码的if
+3. CD段:对应第16行代码的if
+
+```mermaid
+graph LR;
+　　A --> B;
+　　B --> C;
+　　C --> D;
+```
+
+一般来说,会==优先处理中间段(BC),BC长度固定为1,并且BC段会包含两个端点==,这样就能有效的防止low = mid + 1,high = mid - 1超出界限.
+
+回顾地35题(搜索插入顺序)也是二分法,因为数组元素之间的距离就是为1,所以我们不必担心low = mid + 1,high = mid - 1会超出界限.
+
+
+
+------
+
+# [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
+
+假设你正在爬楼梯。需要 *n* 阶你才能到达楼顶。
+
+每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+
+**注意：**给定 *n* 是一个正整数。
+
+**示例 1：**
+
+```
+输入： 2
+输出： 2
+解释： 有两种方法可以爬到楼顶。
+1.  1 阶 + 1 阶
+2.  2 阶
+```
+
+**示例 2：**
+
+```
+输入： 3
+输出： 3
+解释： 有三种方法可以爬到楼顶。
+1.  1 阶 + 1 阶 + 1 阶
+2.  1 阶 + 2 阶
+3.  2 阶 + 1 阶
+```
+
+设x为1阶的数量,y为2阶的数量,n为总阶数.
+所以  $x+2y=n$ 
+得到  ​$\frac{x}{2} + y=\frac{n}{2}$
+得到  ​$y<\frac{n}{2}$
+
+我的思路:
+
+1. 因为一阶的数量为$x$,二阶的数量为$y$,所以数量和为$x+y$,即$n-y$
+2. 题目可以演变成:
+   $y=[1,\frac{n}{2}]$,在$n-y$个空箱子中,放入$y$个小球(剩下的都是$x$),问有多少种方案.
+   即$y=[1,\frac{n}{2}]$,把所有$y$情况下的$C_{n-y}^{y}$相加
+3. 因为当$y=0$的时候,只有一种方案,所以总数量要加1
+
+我的代码:
+
+```python
+class Solution:
+    # 阶乘
+    def fact(self,n):
+        res = 1
+        for each in range(2,n+1):
+            res *= each
+        return res
+    # 组合
+    def combo(self,m,n):
+        return int(self.fact(n)/(self.fact(m)*self.fact(n-m)))
+
+    def climbStairs(self, n: int) -> int:
+        res = 0
+        # 注意y从从1开始,当y=0的时候只有一种情况,所以最后的res加一
+        for y in range(1,n//2+1):
+            res += self.combo(y,n-y)
+        return res + 1
+```
+
+其实如果多列几项的话,就可以看出规律了:
+
+```
+一阶楼梯：1
+两阶楼梯：2
+三阶楼梯：3
+四阶楼梯：5
+五阶楼梯：8
+六阶楼梯：13
+```
+
+实际就是一个缺少第一项的斐波那契数列,具体思路:
+
+```
+n个台阶，一开始可以爬 1 步，也可以爬 2 步，那么n个台阶爬楼的爬楼方法就等于一开始爬1步的方法数 + 一开始爬2步的方法数，这样我们就只需要计算n-1个台阶的方法数和n-2个台阶方法数
+```
+
+所以可以这么写:
+
+```python
+from functools import lru_cache
+
+class Solution:
+    # 设置存缓
+    @lru_cache(10**8)
+    def climbStairs(self, n):
+        if n == 1:
+            return 1
+        elif n == 2:
+            return 2
+        else:
+            return self.climbStairs(n - 1) + self.climbStairs(n - 2)
+```
+
+我们可以手动设置存缓:
+
+```python
+class Solution:
+    def climbStairs(self, n):
+        cache = {}
+        cache[0] = 1
+        cache[1] = 1
+        cache[2] = 2
+
+        for i in range(2,n+1):
+            cache[i] = cache[i-1] + cache[i-2]
+                
+        return cache[i]
+```
+
+上面的抖机灵算法,其实是一个**动态规划**问题,
+动态规划是解决下面这些性质类问题的技术： 
+
+1. ==一个问题可以通过更小子问题的解决方法来解决==（即问题的最优解 包含了其子问题的最优解，也就是**最优子结构性质**）。 
+2. 有些子问题的解可能需要计算多次（也就是**子问题重叠性质**）。 
+3. 子问题的解存储在一张表格里，这样每个子问题只用计算一次。 
+4. 需要额外的空间以节省时间。
+
+
+
+------
+
+# [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
+
+给定一个排序链表，删除所有重复的元素，使得每个元素只出现一次。
+
+**示例 1:**
+
+```
+输入: 1->1->2
+输出: 1->2
+```
+
+**示例 2:**
+
+```
+输入: 1->1->2->3->3
+输出: 1->2->3
+```
+
+链表的定义如下:
+
+```python
+# Definition for singly-linked list.
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+```
+
+我写的代码:
+
+```python
+class Solution:
+	def deleteDuplicates(self, head: ListNode) -> ListNode:
+        # 特殊情况
+		if not head:
+			return None
+		elif not head.next:
+			return head
+
+		dummy = pre = head
+		after = pre.next
+
+		while after.next:
+			if pre.val == after.val:
+				pre.next = after.next
+				after = pre.next
+			else:
+				pre = after
+				after = after.next
+		if pre.val == after.val:
+			pre.next = None
+		return dummy
+```
+
+其实after不是必须的,可以使用pre.next代替,修改之后代码如下:
+
+```python
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if (not head) or (not head.next):
+            return head
+
+        dummy = pre = head
+
+        while pre.next.next:
+            if pre.val == pre.next.val:
+                pre.next = pre.next.next
+            else:
+                pre = pre.next
+
+        if pre.val == pre.next.val:
+            pre.next = None
+        return dummy
+```
+
+上面代码分类太多了,应该如下使用:
+
+```python
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        c = head
+        while(head!=None and head.next!=None):
+            if head.next.val == head.val:
+                head.next = head.next.next
+            else:
+                head = head.next
+        return c
+```
+
+比较两种方法,得出经验:
+==在while中不要使用pre.next.next,改为while(pre!=None and pre.next!=None)==
+
+
+
+------
+
+# [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
+
+给定两个有序整数数组 *nums1* 和 *nums2*，将 *nums2* 合并到 *nums1* 中*，*使得 *num1* 成为一个有序数组。
+
+**说明:**
+
+- 初始化 *nums1* 和 *nums2* 的元素数量分别为 *m* 和 *n*。
+- 你可以假设 *nums1* 有足够的空间（空间大小大于或等于 *m + n*）来保存 *nums2* 中的元素。
+
+**示例:**
+
+```
+输入:
+nums1 = [1,2,3,0,0,0], m = 3
+nums2 = [2,5,6],       n = 3
+输出: [1,2,2,3,5,6]
+```
+
+这其实是==归并排序的最后一并
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

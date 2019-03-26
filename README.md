@@ -1347,6 +1347,34 @@ class Solution:
         return res
 ```
 
+上面使用了quo,remain = divmod(int(a[idx])+int(b[idx])+up,2),但是注意到quo不是1就是0,和up是完全一样的值,所以可以直接使用up来代替quo:
+
+```python
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        # 首先补零:当a为1,b为111时,将a补为001
+        if len(a) > len(b):
+            b = '0'*int(len(a)-len(b)) + b
+        else:
+            a = '0'*int(len(b)-len(a)) + a
+
+        # 进位标志
+        up = 0
+        res = ''
+        idx = len(a) - 1
+
+        while idx >= 0:
+            # 直接使用up
+            up,remain = divmod(int(a[idx])+int(b[idx])+up,2)
+            res = str(remain) + res
+            idx -= 1
+            
+        # 当最后up等于1,表明位数发生变化,需要前面加入1
+        if up == 1:
+            res = '1' + res
+        return res
+```
+
 经验:
 使用while进位标志的方法:
 
@@ -1909,6 +1937,7 @@ class Solution:
             return self.preorder(p) == self.preorder(q)
         else:
             return False
+
 ```
 
 上面代码在输入为[10,5,15],[10,5,null,null,15]的时候,是错的.程序会返回True而不是False.
@@ -1916,24 +1945,33 @@ class Solution:
 
 经验:==如果需要递归比较,那么就该递归参数必须含有这两个参数,不能在递归函数外比较==
 
+递归的基线条件:
+
+1. 两个节点都为空
+2. 一个为空，另一个非空
+3. 都为非空，但是值不相等
+
+递归条件:都为非空，但是值相等.
+
 输入的明显是前序遍历,代码如下:
 
 ```python
 class Solution:
     def isSameTree(self, p, q):
-        # 如果不存在p,q
+        # 如果不存在p,q(基线条件1)
         if not p and not q:
             return True
-        # 如果pq都存在
+        # 如果pq都存在(递归条件)
         elif p and q :
             # 如果子树的根节点相同,就判断左右子树是否相同
             if p.val == q.val:
                 return self.isSameTree(p.left,q.left) and self.isSameTree(p.right,q.right)
             else:
                 return False
-        # pq其中一者存在
+        # pq其中一者存在(基线条件2)
         else:
             return False
+
 ```
 
 注意第10行:==需要使用and,左边判断两棵树的左子树是否相等,右边判断右子树是否相等==
@@ -1949,6 +1987,7 @@ class Solution:
         if not p:
             return not q
         return FalseFalse
+
 ```
 
 
@@ -1967,6 +2006,7 @@ class Solution:
   2   2
  / \ / \
 3  4 4  3
+
 ```
 
 但是下面这个 `[1,2,2,null,3,null,3]` 则不是镜像对称的:
@@ -1977,25 +2017,201 @@ class Solution:
   2   2
    \   \
    3    3
+
 ```
 
 **说明:**
 
 如果你可以运用递归和迭代两种方法解决这个问题，会很加分。
 
+==其实对称就是左子树等于右子树==,这里可以稍微修改一下100题的代码:
+
+```python
+class Solution:
+    def isSymmetric(self, root: TreeNode) -> bool:
+        # 判断是否相等
+        def isSame(p,q):
+            if p and q and p.val==q.val:
+                # 这里判断左子树等于右子树
+                return isSame(p.left,q.right) and isSame(p.right,q.left)
+            if not p:
+                return not q
+            return False
+
+        if not root:
+            return True
+        # 判断root的左子树是否等于右子树
+        return isSame(root.left,root.right)
+
+```
+
+同理,可以设计一个isMorror函数:
+
+```python
+class Solution(object):
+    def isSymmetric(self, root):
+        return self.isMirror(root,root)
+
+    def isMirror(self,t1,t2):
+    	# 特殊情况
+        if not t1 and not t2:
+        	return True
+        elif not t1 or not t2:
+        	return False
+        # 左子树等于右子树
+        return t1.val==t2.val and self.isMirror(t1.right,t2.left) and self.isMirror(t1.left,t2.right)
+
+```
+
+上面都是递归实现,可以使用中序遍历实现:
+
+```python
+class Solution(object):
+    def isSymmetric(self, root):
+        if root:
+            return self.is_mirror(root.left, root.right)
+        # 空树为真
+        return True
+    
+    def is_mirror(self, l_root, r_root):
+        # 镜像的节点都不为空，中序遍历，判断镜像的节点值是否相等
+        if l_root and r_root:
+            if self.is_mirror(l_root.left, r_root.right):
+                if l_root.val == r_root.val:
+                    return self.is_mirror(l_root.right, r_root.left)
+            return False
+        # 镜像的节点至少一个为空，返回两个节点是否相等
+        return l_root == r_root
+
+```
+
+
+
+------
+
+# [104. 二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)
+
+给定一个二叉树，找出其最大深度。
+
+二叉树的深度为根节点到最远叶子节点的最长路径上的节点数。
+
+**说明:** 叶子节点是指没有子节点的节点。
+
+**示例：**
+给定二叉树 `[3,9,20,null,null,15,7]`，
+
+```
+    3
+   / \
+  9  20
+    /  \
+   15   7
+```
+
+返回它的最大深度 3 。
+
+代码如下:
+
+```python
+class Solution(object):
+    def maxDepth(self, root):
+        if not root:
+            return 0
+        
+        lep = self.maxDepth(root.left)
+        rep = self.maxDepth(root.right)
+        # 左右节点数,还有加一个根节点
+        return max(lep,rep)+1
+```
+
+经验:
+
+1. ==使用递归的时候一定要搞清楚这个递归函数是干什么的,不然就不知道什么时候使用这个函数==.(就像对称二叉树题目的is_mirror函数和相同的树题目中的isSameTree函数)
+2. 树递归的基线条件一般是==到达叶节点==
+3. ==在递归中,需要需要计数,那么就计数的变量return出来.==
+4. (重要)==使用递归时,不要管多层的递归栈,只要满足递归条件,只考虑一层栈即可.==
+
+总结使用递归时的思路:
+
+1. 确定基线条件和递归条件
+2. 每次递归都要缩小问题的的规模,不断向基线条件靠拢
+3. 不过递归的多深,迟早是要return的
+4. (重要)==使用递归时,不要管多层的递归栈,只要满足递归条件,只考虑一层栈即可,使用递归的时候一定要搞清楚这个递归函数是干什么的,不然就不知道什么时候使用这个函数.==
+5. ==在递归中,需要需要计数,那么就计数的变量return出来.==
+
+带着这五个点来看上面的代码:
+
+```python
+class Solution(object):
+    def maxDepth(self, root):
+        # 1.基线条件:最后一次传入的root变量为None
+        if not root:
+            return 0
+        # 1.递归条件:当节点有左右子树
+        # 2.通过不断深入子树,不断逼近基线条件(传入的root为None)
+        # 4.这个函数是用来计算路径长度的,既然树可以用,那么子树也可以用
+        lep = self.maxDepth(root.left)
+        rep = self.maxDepth(root.right)
+        # 3.不管递归多深,上面lep的值就是下面return的东西
+        # 5.我们需要计量节点数,那么就需要在return出这些东西
+        return max(lep,rep)+1
+```
 
 
 
 
 
+------
 
+# [107. 二叉树的层次遍历 II](https://leetcode-cn.com/problems/binary-tree-level-order-traversal-ii/)
 
+给定一个二叉树，返回其节点值自底向上的层次遍历。 （即按从叶子节点所在层到根节点所在的层，逐层从左向右遍历）
 
+例如：
+给定二叉树 `[3,9,20,null,null,15,7]`,
 
+```
+    3
+   / \
+  9  20
+    /  \
+   15   7
+```
 
+返回其自底向上的层次遍历为：
 
+```
+[
+  [15,7],
+  [9,20],
+  [3]
+]
+```
 
+代码如下:
 
+```python
+class Solution:
+    def levelOrderBottom(self, root: TreeNode) -> List[List[int]]:   
+        if root == None: return []
+
+        stack = [root]
+        res = []
+        
+        while len(stack) != 0:
+            tmp = []
+            res_each = []
+            for i in stack:
+                res_each.append(i.val)
+                if i.left != None:
+                    tmp.append(i.left)
+                if i.right != None:
+                    tmp.append(i.right)
+            stack = tmp
+            res.insert(0,res_each)
+            
+        return res
+```
 
 
 

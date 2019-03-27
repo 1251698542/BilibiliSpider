@@ -1937,7 +1937,6 @@ class Solution:
             return self.preorder(p) == self.preorder(q)
         else:
             return False
-
 ```
 
 上面代码在输入为[10,5,15],[10,5,null,null,15]的时候,是错的.程序会返回True而不是False.
@@ -1971,7 +1970,6 @@ class Solution:
         # pq其中一者存在(基线条件2)
         else:
             return False
-
 ```
 
 注意第10行:==需要使用and,左边判断两棵树的左子树是否相等,右边判断右子树是否相等==
@@ -1987,7 +1985,6 @@ class Solution:
         if not p:
             return not q
         return FalseFalse
-
 ```
 
 
@@ -2006,7 +2003,6 @@ class Solution:
   2   2
  / \ / \
 3  4 4  3
-
 ```
 
 但是下面这个 `[1,2,2,null,3,null,3]` 则不是镜像对称的:
@@ -2017,7 +2013,6 @@ class Solution:
   2   2
    \   \
    3    3
-
 ```
 
 **说明:**
@@ -2042,7 +2037,6 @@ class Solution:
             return True
         # 判断root的左子树是否等于右子树
         return isSame(root.left,root.right)
-
 ```
 
 同理,可以设计一个isMorror函数:
@@ -2060,7 +2054,6 @@ class Solution(object):
         	return False
         # 左子树等于右子树
         return t1.val==t2.val and self.isMirror(t1.right,t2.left) and self.isMirror(t1.left,t2.right)
-
 ```
 
 上面都是递归实现,可以使用中序遍历实现:
@@ -2082,7 +2075,6 @@ class Solution(object):
             return False
         # 镜像的节点至少一个为空，返回两个节点是否相等
         return l_root == r_root
-
 ```
 
 
@@ -2128,7 +2120,7 @@ class Solution(object):
 
 1. ==使用递归的时候一定要搞清楚这个递归函数是干什么的,不然就不知道什么时候使用这个函数==.(就像对称二叉树题目的is_mirror函数和相同的树题目中的isSameTree函数)
 2. 树递归的基线条件一般是==到达叶节点==
-3. ==在递归中,需要需要计数,那么就计数的变量return出来.==
+3. ==在递归中,需要需要计数,那么就计数的变量return出来.就是说:递归函数求什么就需要return出什么==
 4. (重要)==使用递归时,不要管多层的递归栈,只要满足递归条件,只考虑一层栈即可.==
 
 总结使用递归时的思路:
@@ -2213,21 +2205,300 @@ class Solution:
         return res
 ```
 
+代码如下:
+
+```python
+# 主要思路:将每层的节点倒序填充进res,然后将下一次要迭代的节点放入stack
+class Solution:
+    def levelOrderBottom(self, root: TreeNode) -> List[List[int]]:   
+        if not root: return []
+        
+        # 使用stack存放每层节点
+        stack = [root]
+        # 将来会倒序填充res
+        res = []
+        
+        while len(stack) != 0:
+            # 使用tmp存放每层节点的左右子节点
+            tmp = []
+            # res_each用于存放每一层的元素
+            res_each = []
+            for i in stack:
+                # 将节点的值放入res_each中
+                res_each.append(i.val)
+                if i.left:
+                    tmp.append(i.left)
+                if i.right:
+                    tmp.append(i.right)
+            # 将下次要迭代的节点放入stack
+            stack = tmp
+            # 每次都在res头部添加
+            res.insert(0,res_each)
+            
+        return res
+```
+
+也可以使用队列:
+
+```python
+# 队列q存放将要迭代的节点,res存放每层的左右节点,List存放正序的结果,最后需要倒序输出
+class Solution(object):
+    def levelOrderBottom(self, root):
+        if not root:
+            return []
+        return self.levelOrder(root)
+        
+    def levelOrder(self,root):
+        q = deque()
+        q.append(root)
+        List = []
+        while q:
+            res = []
+            for i in range(len(q)):
+                item = q.popleft()
+                res.append(item.val)
+                if item.left:
+                    q.append(item.left)
+                if item.right:
+                    q.append(item.right)
+            List.append(res)
+        # 将List倒序输出
+        output = []
+        while(List):
+            output.append(List.pop())
+        return output
+```
 
 
 
+------
+
+# [108. 将有序数组转换为二叉搜索树](https://leetcode-cn.com/problems/convert-sorted-array-to-binary-search-tree/)
+
+将一个按照升序排列的有序数组，转换为一棵高度平衡二叉搜索树。
+
+本题中，一个高度平衡二叉树是指一个二叉树*每个节点* 的左右两个子树的高度差的绝对值不超过 1。
+
+**示例:**
+
+```
+给定有序数组: [-10,-3,0,5,9],
+
+一个可能的答案是：[0,-3,9,-10,null,5]，它可以表示下面这个高度平衡二叉搜索树：
+
+      0
+     / \
+   -3   9
+   /   /
+ -10  5
+```
+
+代码如下:
+
+```python
+class Solution(object):
+    def sortedArrayToBST(self, nums):
+        # 特殊情况
+        if len(nums)==0:
+            return None
+        if len(nums)==1:
+            return TreeNode(nums[0])
+
+        # 二分后递归(因为二分的中点就是根节点)
+        mid = int(len(nums)//2)
+        # 得到根节点
+        root = TreeNode(nums[mid])
+        root.left = self.sortedArrayToBST(nums[:mid])
+        root.right = self.sortedArrayToBST(nums[mid+1:])
+        return root
+```
+
+经验:
+
+1. ==列表的基线条件不仅可以用for each in alist,还可以不断的二分来获取,这时候的递归参数基本就是alist[:mid]和alist[:mid+1]==
+2. 涉及列表和树,基本不会使用for each in alist.因为需要root = TreeNode来创建节点.
 
 
 
+------
+
+# [110. 平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)
+
+给定一个二叉树，判断它是否是高度平衡的二叉树。
+
+本题中，一棵高度平衡二叉树定义为：
+
+> 一个二叉树*每个节点* 的左右两个子树的高度差的绝对值不超过1。
+
+**示例 1:**
+
+给定二叉树 `[3,9,20,null,null,15,7]`
+
+```
+    3
+   / \
+  9  20
+    /  \
+   15   7
+```
+
+返回 `true` 。
+
+**示例 2:**
+
+给定二叉树 `[1,2,2,3,3,null,null,4,4]`
+
+```
+       1
+      / \
+     2   2
+    / \
+   3   3
+  / \
+ 4   4
+```
+
+返回 `false` 。
+
+代码:
+
+```python
+class Solution:
+    def isBalanced(self, root: TreeNode) -> bool:
+        if not root:
+            return True
+        if abs(self.countfloor(root.left)-self.countfloor(root.right))>1:
+            return False
+        else:
+            return self.isBalanced(root.left) and self.isBalanced(root.right)
+    #求二叉树及其子树的高度
+    def countfloor(self,root):  
+        if not root:
+            return 0
+        else:
+            # 重要
+            return max(self.countfloor(root.left),self.countfloor(root.right))+1
+```
+
+我的代码(是错误的):
+
+```python
+class Solution:
+    def get_height(self,root):
+        if not root:
+            return 0
+        a = self.get_height(root.left) + 1
+        b = self.get_height(root.right) + 1
+        return max(a,b)
+
+    def isBalanced(self, root: TreeNode) -> bool:
+        if not root:
+            return True
+        a = self.get_height(root.left)
+        b = self.get_height(root.right)
+
+        if abs(a-b) <= 1:
+            # 这里只判断了根节点,没有判断其他节点
+            return True
+        else:
+            # 这里是错误的
+            return False
+```
+
+上面正确的代码和我的代码最大的区别就是最后的return:
+当某个节点平时,我们可以考虑这个节点的左节点和右节点,而不是直接return.
+
+经验:==需要对整个树的节点都使用递归函数,那么就需要对Node.left和Node.right使用该递归函数==
 
 
 
+------
+
+# [111. 二叉树的最小深度](https://leetcode-cn.com/problems/minimum-depth-of-binary-tree/)
+
+给定一个二叉树，找出其最小深度。
+
+最小深度是从根节点到最近叶子节点的最短路径上的节点数量。
+
+**说明:** 叶子节点是指没有子节点的节点。
+
+**示例:**
+
+给定二叉树 `[3,9,20,null,null,15,7]`,
+
+```
+    3
+   / \
+  9  20
+    /  \
+   15   7
+```
+
+返回它的最小深度  2.  
+
+代码如下:
+
+```python
+class Solution:
+    def minDepth(self, root: TreeNode) -> int:
+        if not root:
+            return 0
+            
+        a = self.minDepth(root.left)
+        b = self.minDepth(root.right)
+
+        # 如果是叶节点
+        if not root.left or not root.right:
+            return 1 + max(a,b)
+        # 如果不是叶节点(因为叶节点肯定会return 0,所以不能使用min)
+        else:
+            return 1 + min(a,b)
+```
+
+经验:==在递归中,判断叶节点的方式有两种==
+
+1. `if not root.left or not root.right:`
+2. `if not root`
 
 
 
+------
 
+# [112. 路径总和](https://leetcode-cn.com/problems/path-sum/)
 
+给定一个二叉树和一个目标和，判断该树中是否存在根节点到叶子节点的路径，这条路径上所有节点值相加等于目标和。
 
+**说明:** 叶子节点是指没有子节点的节点。
+
+**示例:** 
+给定如下二叉树，以及目标和 `sum = 22`，
+
+```
+              5
+             / \
+            4   8
+           /   / \
+          11  13  4
+         /  \      \
+        7    2      1
+```
+
+返回 `true`, 因为存在目标和为 22 的根节点到叶子节点的路径 `5->4->11->2`。
+
+代码如下:
+
+```python
+class Solution(object):
+    def hasPathSum(self, root, sum):
+        if root is None:
+            return False
+        if sum==root.val and root.left is None and root.right is None:
+            return True
+        if self.hasPathSum(root.left,sum-root.val) or self.hasPathSum(root.right,sum-root.val):
+            return True
+        else:
+            return False
+```
 
 
 
